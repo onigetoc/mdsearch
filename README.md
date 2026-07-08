@@ -4,10 +4,10 @@ Local full-text search CLI for Markdown knowledge bases, Obsidian vaults, and no
 
 ## LLM-ready workflows
 
-mdsearch helps AI tools and LLM workflows retrieve relevant context from Markdown knowledge bases.
-Search results are available in structured formats designed for AI agents, automation, and context retrieval. 
+mdsearch helps AI tools and LLM workflows retrieve relevant context from Markdown knowledge bases. Search results are available in structured formats designed for AI agents, automation, and context retrieval.
 
-Learn more about the mdsearch skill:
+For maximum token efficiency and streamlined context retrieval, we recommend using the dedicated **mdsearch skill** which provides automated, ready-to-use workflows for your LLM agents:
+
 https://github.com/onigetoc/mdsearch-skill
 
 ## Version, Help & Listing
@@ -34,13 +34,16 @@ npm install -g mdsearch-tool
 ## Usage
 
 ```bash
-npx mdsearch "<query>" [<folder>] [options]
-
-# or locally:
-node src/search-md.mjs "<query>" [<folder>] [options]
+npx @onigetoc/mdsearch "<query>" [<folder>] [options]
 ```
 
 Folder defaults to the current directory if omitted. The index is auto-built on first run (cache in `.mdsearch/`).
+
+For faster execution if you have [Bun](https://bun.sh/) installed, you can use `bunx` instead of `npx`:
+
+```bash
+bunx @onigetoc/mdsearch "<query>" [<folder>] [options]
+```
 
 ## All commands - copy/paste
 
@@ -77,43 +80,6 @@ mdsearch "term" ~/my-notes --cache-dir .mycache
 
 # ── LLM-READY ──
 mdsearch "PI agent shell injection" ~/my-notes --context 4 --limit 3 --llm-context
-```
-
-## Local development (without global install)
-
-```bash
-# ── SIMPLE ──
-node src/search-md.mjs "minisearrch" notes-test                    # fuzzy=0.2 (default)
-node src/search-md.mjs "minisearrch" notes-test --no-fuzzy         # exact only
-node src/search-md.mjs "minisearch" notes-test --fuzzy 0.4         # wider fuzzy
-
-# ── BOOST ──
-node src/search-md.mjs "term" notes-test                           # boost: title=3, headings=2, text=1
-node src/search-md.mjs "term" notes-test --boost-title 5 --boost-headings 3 --boost-text 1
-node src/search-md.mjs "term" notes-test --boost-title 1 --boost-headings 1 --boost-text 1
-
-# ── CONTEXT / LIMIT ──
-node src/search-md.mjs "term" notes-test --limit 5
-node src/search-md.mjs "term" notes-test --context 0
-node src/search-md.mjs "term" notes-test --context 4
-
-# ── OUTPUT FORMAT ──
-node src/search-md.mjs "term" notes-test                           # human-readable
-node src/search-md.mjs "term" notes-test --json                    # JSON
-node src/search-md.mjs "term" notes-test --context 4 --llm-context # compact LLM
-
-# ── PREFIX ──
-node src/search-md.mjs "minis" notes-test --prefix
-
-# ── CACHE / INDEX ──
-node src/index-md.mjs ~/my-notes                                   # pre-build index
-node src/index-md.mjs ~/my-notes --cache-dir .mycache
-node src/search-md.mjs "minisearch" ~/my-notes                     # uses cache
-node src/search-md.mjs "term" ~/my-notes --reindex                 # force rebuild
-node src/search-md.mjs "term" ~/my-notes --cache-dir .mycache
-
-# ── LLM-READY ──
-node src/search-md.mjs "PI agent shell injection" ~/my-notes --context 4 --limit 3 --llm-context
 ```
 
 ## Cache structure

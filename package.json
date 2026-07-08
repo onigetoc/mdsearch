@@ -1,6 +1,6 @@
 {
-  "name": "mdsearch",
-  "version": "0.1.0",
+  "name": "@onigetoc/mdsearch",
+  "version": "0.1.1",
   "description": "Blazing-fast full-text search CLI for Markdown knowledge bases with automatic indexing, fuzzy search, contextual snippets, and LLM-ready output.",
   "type": "module",
   "bin": {
