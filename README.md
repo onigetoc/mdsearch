@@ -1,4 +1,4 @@
-# mdsearch — Fast full-text search for Markdown knowledge bases
+# mdsearch - Fast full-text search for Markdown knowledge bases
 
 Local full-text search CLI for Markdown knowledge bases, Obsidian vaults, and note collections. Powered by [MiniSearch](https://github.com/lucaong/minisearch), with automatic indexing, fuzzy search, contextual snippets with line numbers, and LLM-ready output.
 
@@ -42,7 +42,7 @@ node src/search-md.mjs "<query>" [<folder>] [options]
 
 Folder defaults to the current directory if omitted. The index is auto-built on first run (cache in `.mdsearch/`).
 
-## All commands — copy/paste
+## All commands - copy/paste
 
 ```bash
 # ── SIMPLE ──
@@ -120,14 +120,14 @@ node src/search-md.mjs "PI agent shell injection" ~/my-notes --context 4 --limit
 
 `.mdsearch/` contains:
 
-- `index.json` — serialized MiniSearch index
-- `meta.json` — folder signature (file count + max mtime), id → absolute path mapping
+- `index.json` - serialized MiniSearch index
+- `meta.json` - folder signature (file count + max mtime), id → absolute path mapping
 
 If the signature changes (file added/removed/modified), `search-md.mjs` detects it and re-indexes automatically.
 
 ## Output formats
 
-All formats include line numbers and normalized scores (0.00 — 1.00).
+All formats include line numbers and normalized scores (0.00 - 1.00).
 
 | Mode | Example |
 |---|---|
@@ -143,7 +143,7 @@ A skill defines a custom workflow for processing search results, generating summ
 
 ### Available skills
 
-* **Summarize** — Generate concise summaries from indexed Markdown content.
+* **Summarize** - Generate concise summaries from indexed Markdown content.
 * More skills coming soon.
 
 Learn more about skills:
@@ -154,13 +154,13 @@ https://github.com/onigetoc/mdsearch-skills
 ## Dependencies
 
 - [Node.js](https://nodejs.org/) ≥ 18
-- [minisearch](https://github.com/lucaong/minisearch) — only npm dependency
+- [minisearch](https://github.com/lucaong/minisearch) - only npm dependency
 
 ## Possible improvements
 
-- **Tag filtering** — `mdsearch "claude" --tag "video"` to filter by front-matter tags
-- **Multi-term** — `mdsearch "claude archon" --and` (results containing all terms)
-- **Stats mode** — `mdsearch --stats` : file count, estimated tokens, cache size
-- **Markdown export** — `--export` generates a `.md` file with formatted results
-- **Shell completions** — tab completion for zsh/bash/powershell
-- **Watch mode** — `--watch` monitors files and re-indexes on change
+- **Tag filtering** - `mdsearch "claude" --tag "video"` to filter by front-matter tags
+- **Multi-term** - `mdsearch "claude archon" --and` (results containing all terms)
+- **Stats mode** - `mdsearch --stats` : file count, estimated tokens, cache size
+- **Markdown export** - `--export` generates a `.md` file with formatted results
+- **Shell completions** - tab completion for zsh/bash/powershell
+- **Watch mode** - `--watch` monitors files and re-indexes on change
