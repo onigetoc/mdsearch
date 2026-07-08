@@ -1,0 +1,38 @@
+{
+  "name": "mdsearch",
+  "version": "0.1.0",
+  "description": "Blazing-fast full-text search CLI for Markdown knowledge bases with automatic indexing, fuzzy search, contextual snippets, and LLM-ready output.",
+  "type": "module",
+  "bin": {
+    "mdsearch": "./src/search-md.mjs",
+    "mdindex": "./src/index-md.mjs"
+  },
+  "files": [
+    "src/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "minisearch": "^7.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coteg/mdsearch-tool.git"
+  },
+  "keywords": [
+    "markdown",
+    "search",
+    "cli",
+    "full-text",
+    "minisearch",
+    "fuzzy-search",
+    "obsidian",
+    "snippet",
+    "llm",
+    "knowledge-base",
+    "note-taking"
+  ],
+  "license": "MIT"
+}

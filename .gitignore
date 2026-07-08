@@ -1,0 +1,8 @@
+node_modules/
+.mdsearch/
+bun.lock
+
+.agents/
+AGENTS.md
+docs-test/
+mdsearch-skill
