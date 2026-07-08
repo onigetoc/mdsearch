@@ -4,8 +4,8 @@
   "description": "Blazing-fast full-text search CLI for Markdown knowledge bases with automatic indexing, fuzzy search, contextual snippets, and LLM-ready output.",
   "type": "module",
   "bin": {
-    "mdsearch": "./src/search-md.mjs",
-    "mdindex": "./src/index-md.mjs"
+    "mdsearch": "src/search-md.mjs",
+    "mdindex": "src/index-md.mjs"
   },
   "files": [
     "src/",
