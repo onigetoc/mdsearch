@@ -19,6 +19,9 @@
 //   --llm-context     compact text output ready for LLM prompts
 //   --reindex         force index rebuild even if cache looks fresh
 //   --cache-dir       cache folder name (default: .mdsearch)
+//
+// Subcommands:
+//   mdindex [folder]  rebuild index for folder
 
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -28,6 +31,7 @@ import {
   computeSignature,
   signaturesMatch,
   extractSnippetFromFile,
+  parseFrontMatter,
   MINISEARCH_OPTIONS,
   DEFAULT_BOOST,
   DEFAULT_FUZZY,
@@ -40,12 +44,15 @@ function parseArgs(argv) {
     positional: [], fuzzy: DEFAULT_FUZZY, prefix: false, limit: 10,
     json: false, context: 2, reindex: false, cacheDir: '.mdsearch', llmContext: false,
     boostTitle: DEFAULT_BOOST.title, boostHeadings: DEFAULT_BOOST.headings, boostText: DEFAULT_BOOST.text,
+    phrase: false,
+    subcommand: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--fuzzy') args.fuzzy = parseFloat(argv[++i]);
     else if (a === '--no-fuzzy') args.fuzzy = null;
     else if (a === '--prefix') args.prefix = true;
+    else if (a === '--phrase') args.phrase = true;
     else if (a === '--limit') args.limit = parseInt(argv[++i], 10);
     else if (a === '--context') args.context = parseInt(argv[++i], 10);
     else if (a === '--boost-title') args.boostTitle = parseFloat(argv[++i]);
@@ -53,7 +60,8 @@ function parseArgs(argv) {
     else if (a === '--boost-text') args.boostText = parseFloat(argv[++i]);
     else if (a === '--json') args.json = true;
     else if (a === '--llm-context' || a === '--md') args.llmContext = true;
-    else if (a === '--reindex') args.reindex = true;
+    else   if (a === '--reindex') args.reindex = true;
+    else if (a === 'mdindex') args.subcommand = 'mdindex';
     else if (a === '--cache-dir') args.cacheDir = argv[++i];
     else if (a === '--list') args.list = true;
     else if (a === '--help' || a === '-h') args.help = true;
@@ -98,7 +106,7 @@ function loadOrBuildIndex(rootDir, cacheDirName, forceReindex) {
 
 function main() {
   const { folder, query, fuzzy, prefix, limit, json, context, reindex, cacheDir, llmContext,
-    boostTitle, boostHeadings, boostText, help, version, list } = parseArgs(process.argv.slice(2));
+    boostTitle, boostHeadings, boostText, help, version, list, phrase, subcommand } = parseArgs(process.argv.slice(2));
 
   if (version) {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'));
@@ -116,6 +124,7 @@ Options:
   --fuzzy <n>             Fuzzy search tolerance (default: 0.2)
   --no-fuzzy              Disable fuzzy search
   --prefix                Enable prefix search
+  --phrase                Enable exact phrase search (sequence of terms)
   --limit <n>             Max results (default: 10)
   --context <n>           Lines of context around match (default: 2, 0 = disabled)
   --boost-title <n>       Title field weight (default: 3)
@@ -125,6 +134,7 @@ Options:
   --llm-context, --md     Compact LLM-ready output
   --reindex               Force index rebuild
   --cache-dir <dir>       Cache directory name (default: .mdsearch)
+  mdindex <folder>        Rebuild index for folder
 `);
     process.exit(0);
   }
@@ -134,6 +144,13 @@ Options:
     // loadOrBuildIndex handles the index creation if it doesn't exist
     const { meta } = loadOrBuildIndex(rootDir, cacheDir, reindex);
     console.log(Object.values(meta.files).map(f => f.path).sort().join('\n'));
+    process.exit(0);
+  }
+
+  if (subcommand === 'mdindex') {
+    const rootDir = resolve(folder);
+    buildAndSaveIndex(rootDir, cacheDir);
+    console.log(`Index rebuilt for folder: ${rootDir}`);
     process.exit(0);
   }
 
@@ -154,11 +171,26 @@ Options:
 
   const searchOptions = {
     boost: { title: boostTitle, headings: boostHeadings, text: boostText },
+    combineWith: 'OR',
   };
   if (fuzzy !== null && !Number.isNaN(fuzzy) && fuzzy > 0) searchOptions.fuzzy = fuzzy;
   if (prefix) searchOptions.prefix = true;
 
-  const rawResults = miniSearch.search(query, searchOptions).slice(0, limit);
+  let rawResults = miniSearch.search(query, searchOptions);
+
+  if (phrase) {
+    const phrase = query.toLowerCase();
+    rawResults = rawResults.filter(r => {
+      const fileMeta = meta.files[r.id];
+      if (!fileMeta) return false;
+      // Read content to verify the phrase exists
+      const raw = readFileSync(fileMeta.absolutePath, 'utf-8');
+      const { content } = parseFrontMatter(raw);
+      return content.toLowerCase().includes(phrase);
+    });
+  }
+
+  rawResults = rawResults.slice(0, limit);
 
   const maxScore = rawResults.length > 0 ? rawResults[0].score : 1;
 
