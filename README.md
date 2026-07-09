@@ -84,7 +84,7 @@ mdsearch --list --reindex                                  # force re-index befo
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--fuzzy` | number | `0.2` | Fuzzy matching factor (0 = exact, 1 = very fuzzy). Use `--no-fuzzy` to disable. |
+| `--no-fuzzy` | boolean | `false` | Disable fuzzy matching (exact search only) |
 | `--prefix` | boolean | `false` | Enable prefix search (match term prefixes) |
 | `--phrase` | boolean | `false` | Exact phrase search (sequence of terms in order) |
 | `--and` | boolean | `false` | Require all terms (default is OR — any term matches) |
