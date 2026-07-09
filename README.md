@@ -33,12 +33,6 @@ npx @onigetoc/mdsearch "<query>" [<folder>]
 
 Folder defaults to the current directory if omitted. The index is auto-built on first run (cache in `.mdsearch/`).
 
-### Local dev test
-
-```bash
-node src/search-md.mjs "<query>"          # test without installing
-```
-
 ## Examples
 
 ```bash
@@ -78,6 +72,12 @@ mdsearch --version
 mdsearch --help
 mdsearch --list                                            # list indexed files (auto-build if missing)
 mdsearch --list --reindex                                  # force re-index before listing
+```
+
+### Local dev test only
+
+```bash
+node src/search-md.mjs "<query>"          # test without installing
 ```
 
 ## Options
