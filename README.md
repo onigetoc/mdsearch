@@ -130,17 +130,17 @@ mdsearch "karpathy wiki" --json
   "total_results": 10,
   "results": [
     {
-      "title": "karpathy's second brain: how to build it",
+      "title": "karpathy's second brain: how i build it",
       "description": "100K people bookmarked Andrej Karpathy post. LLM Knowledge Bases — Something I'm finding very useful recently: using...",
-      "path": "0-Obsidian-Compagnon\\karpathy's second brain_ how to build it.md",
+      "path": "Obsidian-knowledge-base\\karpathy's second brain_ how to build it.md",
       "line": 4,
       "score": 1,
-      "snippet": "line 2:   ![Image](https://pbs.twimg.com/media/HFQISUuW4AAfPXJ?format=jpg)\nline 3:   \nline 4: → ## 100K people bookmarked @karpathy's post:\nline 5:   \nline 6:   > Apr 2"
+      "snippet": "line 4:   > An LLM wiki is a knowledge system where the LLM maintains structured wiki pages instead of re-searching raw documents on every question.\nline 5:   \nline 6: → ## What Is an LLM Wiki?\nline 7:   \nline 8:   New sources are compiled into durable markdown pages, cross-references are updated over time, and answers cite the wiki pages that already contain the synthesized knowledge. This skill gives you three operations: **Ingest** (collect + compile), **Query** (search + cite), and **Lint** (check integrity)."
     },
     {
       "title": "How the Open Knowledge Format can improve data sharing",
       "description": "Learn how the Open Knowledge Format helps secure data sharing and improves collaboration across teams with standardized documentation.",
-      "path": "0-Obsidian-Compagnon\\How the Open Knowledge Format (OKF) can improve data sharing Google Cloud Blog.md",
+      "path": "Obsidian-knowledge-base\\How the Open Knowledge Format (OKF) can improve data sharing Google Cloud Blog.md",
       "line": 20,
       "score": 0.45,
       "snippet": "line 18:   As foundation models continue to improve, the lack of relevant context often limits what they can do, especially as they are used to build agentic systems. While these models can help you write code, summarize documents, or analyze a dataset, they still need the right information to produce accurate and actionable results.\nline 19:   \nline 20: → That's why today, we're introducing the Open Knowledge Format (OKF), an open specification that formalizesthe [LLM-wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern into a portable,interoperable format. This is a vendor-neutral, agent- and human-friendly standard for representing the metadata, context, and curated knowledge that modern AI systems need.\nline 21:   \nline 22:   As published, **OKF v0.1** represents knowledge as a directory of markdown files with YAML frontmatter, with a small set of agreed-upon conventions that let wikis written by different producers be consumed by different agents without translation."
