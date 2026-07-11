@@ -121,9 +121,10 @@ All formats include line numbers and normalized scores (0.00 - 1.00).
 | LLM context | YAML frontmatter `---\nquery: "..."\nexecution_time_ms: 145\nformat: markdown\n---` then markdown blocks |
 
 ### JSON output example
+`intentional misspelling ("karpaty" instead of "karpathy")`
 
 ```json
-mdsearch "karpaty wiki" --json // intentional misspelling ("karpaty" instead of "karpathy")
+mdsearch "karpaty wiki" --json 
 {
   "query": "karpathy wiki",
   "execution_time_ms": 223,
