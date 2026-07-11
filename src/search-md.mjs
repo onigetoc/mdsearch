@@ -165,6 +165,7 @@ Options:
     process.exit(1);
   }
 
+  const startTime = performance.now();
   const { miniSearch, meta, rebuilt } = loadOrBuildIndex(rootDir, cacheDir, reindex);
 
   if (!query) return;
@@ -203,22 +204,27 @@ Options:
   });
 
   if (json) {
-    console.log(JSON.stringify(results.map(r => ({
-      title: r.title,
-      description: r.description,
-      path: r.path,
-      line: r.line,
-      score: +r.normalizedScore.toFixed(2),
-      snippet: r.snippet,
-    })), null, 2));
+    const elapsed = Math.round(performance.now() - startTime);
+    console.log(JSON.stringify({
+      query,
+      execution_time_ms: elapsed,
+      total_results: results.length,
+      results: results.map(r => ({
+        title: r.title,
+        description: r.description,
+        path: r.path,
+        line: r.line,
+        score: +r.normalizedScore.toFixed(2),
+        snippet: r.snippet,
+      })),
+    }, null, 2));
     return;
   }
 
   if (llmContext) {
-    // Compact output, no scores or decoration, designed to be pasted
-    // directly into an LLM prompt (token-efficient: no frills).
+    const elapsed = Math.round(performance.now() - startTime);
     if (results.length === 0) {
-      console.log('(no relevant results found in notes)');
+      console.log(`---\nquery: "${query}"\nexecution_time_ms: ${elapsed}\nformat: markdown\n---\n\n(no relevant results found in notes)`);
       return;
     }
     const blocks = results.map(r => {
@@ -227,7 +233,7 @@ Options:
         : r.description;
       return `### ${r.title}\nSource: ${r.path}\nConfidence: ${r.normalizedScore.toFixed(2)}\n\n${body}`;
     });
-    console.log(blocks.join('\n\n---\n\n'));
+    console.log(`---\nquery: "${query}"\nexecution_time_ms: ${elapsed}\nformat: markdown\n---\n\n${blocks.join('\n\n---\n\n')}`);
     return;
   }
 
@@ -241,6 +247,9 @@ Options:
     console.log('No results.');
     return;
   }
+
+  const elapsed = Math.round(performance.now() - startTime);
+  console.log(`<!-- METADATA: ${JSON.stringify({ query, execution_time_ms: elapsed })} -->`);
 
   for (const r of results) {
     console.log(`• ${r.title}`);
