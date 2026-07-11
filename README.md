@@ -120,12 +120,14 @@ All formats include line numbers and normalized scores (0.00 - 1.00).
 | JSON | `{ "query": "...", "execution_time_ms": 145, "total_results": 2, "results": [...] }` |
 | LLM context | YAML frontmatter `---\nquery: "..."\nexecution_time_ms: 145\nformat: markdown\n---` then markdown blocks |
 
-### JSON output example
+### Real JSON output example
 
 ```bash
 # intentional misspelling ("karpaty" instead of "karpathy")
 mdsearch "karpaty wiki" --json 
 ```
+
+### Json final output
 
 ```json
 {
