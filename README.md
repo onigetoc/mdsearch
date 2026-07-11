@@ -123,7 +123,7 @@ All formats include line numbers and normalized scores (0.00 - 1.00).
 ### JSON output example
 
 ```json
-mdsearch "karpathy wiki" --json
+mdsearch "karpaty wiki" --json // intentional misspelling ("karpaty" instead of "karpathy")
 {
   "query": "karpathy wiki",
   "execution_time_ms": 223,
