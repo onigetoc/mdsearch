@@ -123,8 +123,12 @@ All formats include line numbers and normalized scores (0.00 - 1.00).
 ### JSON output example
 `intentional misspelling ("karpaty" instead of "karpathy")`
 
-```json
+```bash
+# intentional misspelling ("karpaty" instead of "karpathy")
 mdsearch "karpaty wiki" --json 
+```
+
+```json
 {
   "query": "karpathy wiki",
   "execution_time_ms": 223,
