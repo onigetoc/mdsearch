@@ -61,6 +61,10 @@ mdsearch "minis" --prefix
 mdsearch "karpathy llm" --phrase                           # exact phrase (sequence of terms)
 mdsearch "karpathy llm" --and                              # require all terms (default: OR)
 
+# EXTENSIONS
+mdsearch "query" --ext .md --ext .mdx                      # search .md and .mdx files
+mdsearch "query" --ext .txt                                # search only .txt files
+
 # CACHE / INDEX
 mdindex ~/my-notes                                         # pre-build index
 mdindex ~/my-notes --cache-dir .mycache
@@ -97,9 +101,95 @@ node src/search-md.mjs "<query>"          # test without installing
 | `--llm-context` | boolean | `false` | Compact LLM-friendly output format |
 | `--reindex` | boolean | `false` | Force rebuild the search index |
 | `--cache-dir` | string | `.mdsearch` | Custom cache directory name |
+| `--ext` | string | `.md` | File extensions to index (repeatable: `--ext .md --ext .mdx`) |
 | `--list` | boolean | `false` | List all indexed files |
 | `--version` | boolean | `false` | Show version number |
 | `--help` | boolean | `false` | Show help message |
+
+## Configuration file (`mdsearch.json`) — optional
+
+This is **entirely optional**. mdsearch works out of the box with sensible defaults and CLI flags. But if you want to avoid repeating the same flags every time, you can drop a `mdsearch.json` file at the root of your project, Obsidian vault, or documentation folder.
+
+**Priority:** CLI flags always override `mdsearch.json` values. The config file just sets your defaults.
+
+### Setup
+
+Create a `mdsearch.json` file in the directory where you run `mdsearch`:
+
+```json
+{
+  "search_dir": "my-docs",
+  "context": 3,
+  "limit": 10,
+  "fuzzy": 0.2,
+  "boost": {
+    "title": 3,
+    "headings": 2,
+    "text": 1
+  },
+  "ignore": ["drafts", "archive/old"],
+  "extensions": [".md", ".mdx"],
+  "output": "text"
+}
+```
+
+### Options
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `search_dir` | string | `.` | Folder to search (relative to `mdsearch.json` location) |
+| `context` | number | `2` | Lines of context around matches in snippets |
+| `limit` | number | `10` | Max results returned |
+| `fuzzy` | number / `false` | `0.2` | Fuzzy tolerance (0 to 1), `false` to disable |
+| `boost.title` | number | `3` | Weight for title matches |
+| `boost.headings` | number | `2` | Weight for heading matches |
+| `boost.text` | number | `1` | Weight for body text matches |
+| `ignore` | string[] | `[]` | Folders/paths to exclude from indexing |
+| `extensions` | string[] | `[".md"]` | File extensions to index |
+| `output` | string | `"text"` | Default output format: `"text"`, `"json"`, or `"llm-context"` |
+| `cache_dir` | string | `".mdsearch"` | Cache directory name |
+
+### Use cases
+
+**Obsidian vault** — search your personal notes without indexing drafts:
+
+```json
+{
+  "search_dir": ".",
+  "ignore": ["drafts", "templates", ".trash"],
+  "extensions": [".md"],
+  "context": 3
+}
+```
+
+**Programming documentation** — search a docs folder with MDX support:
+
+```json
+{
+  "search_dir": "docs",
+  "extensions": [".md", ".mdx"],
+  "limit": 5,
+  "output": "json"
+}
+```
+
+**AI/LLM knowledge base** — optimized for LLM context retrieval:
+
+```json
+{
+  "search_dir": "knowledge-base",
+  "context": 4,
+  "limit": 3,
+  "output": "llm-context",
+  "boost": {
+    "title": 5,
+    "headings": 3,
+    "text": 1
+  }
+}
+```
+
+> CLI flags **always** override `mdsearch.json` values. For example, `mdsearch "query" --limit 3` will use 3 even if the config says 10. Same for `--ext` which overrides `extensions`. Without a config file, mdsearch uses its built-in defaults — no setup required.
 
 ## Cache structure
 

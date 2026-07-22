@@ -19,9 +19,9 @@ import {
   SCHEMA_VERSION,
 } from './lib.mjs';
 
-export function buildAndSaveIndex(folder, cacheDirName = '.mdsearch') {
+export function buildAndSaveIndex(folder, cacheDirName = '.mdsearch', extensions) {
   const rootDir = resolve(folder);
-  const files = findMarkdownFiles(rootDir);
+  const files = findMarkdownFiles(rootDir, extensions);
   const signature = computeSignature(files);
 
   const documents = files.map((f, i) => loadDocument(f, i));

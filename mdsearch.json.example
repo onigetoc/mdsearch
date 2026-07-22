@@ -1,0 +1,14 @@
+{
+  "search_dir": "my-docs",
+  "context": 3,
+  "limit": 10,
+  "fuzzy": 0.2,
+  "boost": {
+    "title": 3,
+    "headings": 2,
+    "text": 1
+  },
+  "ignore": ["drafts", "archive/old"],
+  "extensions": [".md", ".mdx"],
+  "output": "text"
+}

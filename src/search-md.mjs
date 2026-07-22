@@ -15,6 +15,7 @@
 //   --boost-title 3   title field weight (default: 3)
 //   --boost-headings 2  heading # ## ### weight (default: 2)
 //   --boost-text 1    body text weight (default: 1)
+//   --boost-date 1    frontmatter date weight (default: 1)
 //   --json            raw JSON output
 //   --llm-context     compact text output ready for LLM prompts
 //   --reindex         force index rebuild even if cache looks fresh
@@ -38,49 +39,54 @@ import {
   SCHEMA_VERSION,
 } from './lib.mjs';
 import { buildAndSaveIndex } from './index-md.mjs';
+import { loadConfig } from './config.mjs';
 
 function parseArgs(argv) {
   const args = {
-    positional: [], fuzzy: DEFAULT_FUZZY, prefix: false, limit: 10,
-    json: false, context: 2, reindex: false, cacheDir: '.mdsearch', llmContext: false,
-    boostTitle: DEFAULT_BOOST.title, boostHeadings: DEFAULT_BOOST.headings, boostText: DEFAULT_BOOST.text,
+    positional: [], fuzzy: undefined, prefix: false, limit: undefined,
+    json: false, context: undefined, reindex: false, cacheDir: undefined, llmContext: false,
+    boostTitle: undefined, boostHeadings: undefined, boostText: undefined, boostDate: undefined,
     phrase: false,
     subcommand: null,
   };
+  // Track which flags were explicitly set by CLI
+  const explicit = new Set();
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--fuzzy') args.fuzzy = parseFloat(argv[++i]);
-    else if (a === '--no-fuzzy') args.fuzzy = null;
+    if (a === '--fuzzy') { args.fuzzy = parseFloat(argv[++i]); explicit.add('fuzzy'); }
+    else if (a === '--no-fuzzy') { args.fuzzy = null; explicit.add('fuzzy'); }
     else if (a === '--prefix') args.prefix = true;
     else if (a === '--phrase') args.phrase = true;
-    else if (a === '--limit') args.limit = parseInt(argv[++i], 10);
-    else if (a === '--context') args.context = parseInt(argv[++i], 10);
-    else if (a === '--boost-title') args.boostTitle = parseFloat(argv[++i]);
-    else if (a === '--boost-headings') args.boostHeadings = parseFloat(argv[++i]);
-    else if (a === '--boost-text') args.boostText = parseFloat(argv[++i]);
-    else if (a === '--json') args.json = true;
-    else if (a === '--llm-context' || a === '--md') args.llmContext = true;
-    else   if (a === '--reindex') args.reindex = true;
+    else if (a === '--limit') { args.limit = parseInt(argv[++i], 10); explicit.add('limit'); }
+    else if (a === '--context') { args.context = parseInt(argv[++i], 10); explicit.add('context'); }
+    else if (a === '--boost-title') { args.boostTitle = parseFloat(argv[++i]); explicit.add('boostTitle'); }
+    else if (a === '--boost-headings') { args.boostHeadings = parseFloat(argv[++i]); explicit.add('boostHeadings'); }
+    else if (a === '--boost-text') { args.boostText = parseFloat(argv[++i]); explicit.add('boostText'); }
+    else if (a === '--boost-date') { args.boostDate = parseFloat(argv[++i]); explicit.add('boostDate'); }
+    else if (a === '--json') { args.json = true; explicit.add('output'); }
+    else if (a === '--llm-context' || a === '--md') { args.llmContext = true; explicit.add('output'); }
+    else if (a === '--reindex') args.reindex = true;
     else if (a === 'mdindex') args.subcommand = 'mdindex';
-    else if (a === '--cache-dir') args.cacheDir = argv[++i];
+    else if (a === '--cache-dir') { args.cacheDir = argv[++i]; explicit.add('cacheDir'); }
+    else if (a === '--ext') { if (!args.extensions) args.extensions = []; args.extensions.push(argv[++i]); explicit.add('extensions'); }
     else if (a === '--list') args.list = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else if (a === '--version' || a === '-v') args.version = true;
     else args.positional.push(a);
   }
-  let query = args.positional[0], folder = '.';
-  if (args.positional.length >= 2) folder = args.positional[1];
-  return { ...args, folder, query };
+  let query = args.positional[0], folder = undefined;
+  if (args.positional.length >= 2) { folder = args.positional[1]; explicit.add('folder'); }
+  return { ...args, folder, query, _explicit: explicit };
 }
 
 // Load cache if present and up-to-date, otherwise (re)build the index.
 // Returns { miniSearch, meta, rebuilt }.
-function loadOrBuildIndex(rootDir, cacheDirName, forceReindex) {
+function loadOrBuildIndex(rootDir, cacheDirName, forceReindex, extensions) {
   const cacheDir = join(rootDir, cacheDirName);
   const indexPath = join(cacheDir, 'index.json');
   const metaPath = join(cacheDir, 'meta.json');
 
-  const currentFiles = findMarkdownFiles(rootDir);
+  const currentFiles = findMarkdownFiles(rootDir, extensions);
   const currentSignature = computeSignature(currentFiles);
 
   if (!forceReindex && existsSync(indexPath) && existsSync(metaPath)) {
@@ -97,7 +103,7 @@ function loadOrBuildIndex(rootDir, cacheDirName, forceReindex) {
     }
   }
 
-  buildAndSaveIndex(rootDir, cacheDirName);
+  buildAndSaveIndex(rootDir, cacheDirName, extensions);
   const meta = JSON.parse(readFileSync(metaPath, 'utf-8'));
   const indexJson = readFileSync(indexPath, 'utf-8');
   const miniSearch = MiniSearch.loadJSON(indexJson, MINISEARCH_OPTIONS);
@@ -105,8 +111,37 @@ function loadOrBuildIndex(rootDir, cacheDirName, forceReindex) {
 }
 
 function main() {
-  const { folder, query, fuzzy, prefix, limit, json, context, reindex, cacheDir, llmContext,
-    boostTitle, boostHeadings, boostText, help, version, list, phrase, subcommand } = parseArgs(process.argv.slice(2));
+  const parsed = parseArgs(process.argv.slice(2));
+  const explicit = parsed._explicit;
+
+  // Load config file (checks target folder, then cwd)
+  const config = loadConfig(parsed.folder);
+
+  // Resolve folder: CLI > config.search_dir > '.'
+  const folder = explicit.has('folder') ? parsed.folder : (config.search_dir || '.');
+
+  // Merge: config values as base, CLI flags override when explicitly set
+  const fuzzy = explicit.has('fuzzy') ? parsed.fuzzy : config.fuzzy;
+  const limit = explicit.has('limit') ? parsed.limit : config.limit;
+  const context = explicit.has('context') ? parsed.context : config.context;
+  const cacheDir = explicit.has('cacheDir') ? parsed.cacheDir : config.cache_dir;
+  const boostTitle = explicit.has('boostTitle') ? parsed.boostTitle : config.boost.title;
+  const boostHeadings = explicit.has('boostHeadings') ? parsed.boostHeadings : config.boost.headings;
+  const boostText = explicit.has('boostText') ? parsed.boostText : config.boost.text;
+  const boostDate = explicit.has('boostDate') ? parsed.boostDate : config.boost.date;
+
+  // Extensions from config (no CLI override for now)
+  const extensions = explicit.has('extensions') ? parsed.extensions : config.extensions;
+
+  // Output format: CLI flags override config
+  let json = parsed.json;
+  let llmContext = parsed.llmContext;
+  if (!explicit.has('output')) {
+    if (config.output === 'json') json = true;
+    else if (config.output === 'llm-context') llmContext = true;
+  }
+
+  const { query, prefix, reindex, help, version, list, phrase, subcommand } = parsed;
 
   if (version) {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'));
@@ -130,6 +165,7 @@ Options:
   --boost-title <n>       Title field weight (default: 3)
   --boost-headings <n>    Heading weight (default: 2)
   --boost-text <n>        Body text weight (default: 1)
+  --boost-date <n>        Frontmatter date weight (default: 1)
   --json                  Output as JSON
   --llm-context, --md     Compact LLM-ready output
   --reindex               Force index rebuild
@@ -142,14 +178,14 @@ Options:
   if (list) {
     const rootDir = resolve(folder);
     // loadOrBuildIndex handles the index creation if it doesn't exist
-    const { meta } = loadOrBuildIndex(rootDir, cacheDir, reindex);
+    const { meta } = loadOrBuildIndex(rootDir, cacheDir, reindex, extensions);
     console.log(Object.values(meta.files).map(f => f.path).sort().join('\n'));
     process.exit(0);
   }
 
   if (subcommand === 'mdindex') {
     const rootDir = resolve(folder);
-    buildAndSaveIndex(rootDir, cacheDir);
+    buildAndSaveIndex(rootDir, cacheDir, extensions);
     console.log(`Index rebuilt for folder: ${rootDir}`);
     process.exit(0);
   }
@@ -166,12 +202,12 @@ Options:
   }
 
   const startTime = performance.now();
-  const { miniSearch, meta, rebuilt } = loadOrBuildIndex(rootDir, cacheDir, reindex);
+  const { miniSearch, meta, rebuilt } = loadOrBuildIndex(rootDir, cacheDir, reindex, extensions);
 
   if (!query) return;
 
   const searchOptions = {
-    boost: { title: boostTitle, headings: boostHeadings, text: boostText },
+    boost: { title: boostTitle, headings: boostHeadings, text: boostText, date: boostDate },
     combineWith: 'OR',
   };
   if (fuzzy !== null && !Number.isNaN(fuzzy) && fuzzy > 0) searchOptions.fuzzy = fuzzy;
@@ -212,6 +248,7 @@ Options:
       results: results.map(r => ({
         title: r.title,
         description: r.description,
+        date: r.date || null,
         path: r.path,
         line: r.line,
         score: +r.normalizedScore.toFixed(2),

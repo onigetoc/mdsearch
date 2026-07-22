@@ -2,10 +2,12 @@ node_modules/
 .mdsearch/
 bun.lock
 
+mdsearch1.json
 .agents/
 AGENTS.md
 docs-test/
 mdsearch-skill
 notes-test
-
-OLD-README.md
+opencode.json
+opencode.-WRONG-Permission-not-for-skilljson
+mdsearch.json

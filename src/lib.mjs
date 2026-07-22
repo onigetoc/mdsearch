@@ -14,7 +14,8 @@ function isIgnoredDir(name) {
 
 // ---------- Directory walk ----------
 
-export function findMarkdownFiles(rootDir) {
+export function findMarkdownFiles(rootDir, extensions) {
+  const extSet = new Set((extensions || ['.md']).map(e => e.toLowerCase()));
   const results = [];
 
   function walk(dir) {
@@ -29,7 +30,7 @@ export function findMarkdownFiles(rootDir) {
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(fullPath);
-      } else if (entry.isFile() && extname(entry.name).toLowerCase() === '.md') {
+      } else if (entry.isFile() && extSet.has(extname(entry.name).toLowerCase())) {
         const st = statSync(fullPath);
         results.push({
           absolutePath: fullPath,
@@ -113,13 +114,16 @@ export function extractHeadings(content) {
 export function loadDocument(fileInfo, id) {
   const raw = readFileSync(fileInfo.absolutePath, 'utf-8');
   const { data, content } = parseFrontMatter(raw);
+  const docDate = data.created || data.published || data.date || data.scanned || data.timestamp || '';
+  const dateStr = typeof docDate === 'string' ? docDate.replace(/["']/g, '').split('T')[0].trim() : '';
   return {
     id,
     path: fileInfo.relativePath,
     title: extractTitle(content, data, fileInfo.absolutePath),
     description: extractDescription(content, data),
-    headings: extractHeadings(content), // separate field, boosted higher than body text
-    text: content, // used for tokenization, never stored in serialized index
+    headings: extractHeadings(content),
+    date: dateStr,
+    text: content,
   };
 }
 
@@ -133,17 +137,17 @@ export const processTerm = (term) => normalizeForMatch(term);
 
 // Bump if indexed field structure changes (e.g. new field).
 // Lets search-md.mjs detect an incompatible cache and force re-index.
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const MINISEARCH_OPTIONS = {
-  fields: ['title', 'headings', 'text'],
-  storeFields: ['title', 'description', 'path'],
+  fields: ['title', 'headings', 'date', 'text'],
+  storeFields: ['title', 'description', 'date', 'path'],
   processTerm,
 };
 
 // Default weights: document title counts most, then headings (# ## ###...),
-// then body text. Adjustable via --boost-title / --boost-headings / --boost-text.
-export const DEFAULT_BOOST = { title: 3, headings: 2, text: 1 };
+// then body text. Adjustable via --boost-title / --boost-headings / --boost-text / --boost-date.
+export const DEFAULT_BOOST = { title: 3, headings: 2, text: 1, date: 1 };
 
 // Fuzzy enabled by default (tolerates typos/minor accent mistakes). 0 = disabled.
 export const DEFAULT_FUZZY = 0.2;
